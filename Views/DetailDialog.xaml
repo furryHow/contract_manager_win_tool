@@ -1,0 +1,115 @@
+<Window x:Class="ContractManager.Views.DetailDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="合同详情" Height="500" Width="650"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        MinHeight="400" MinWidth="500"
+        ShowInTaskbar="False">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" x:Name="HeaderText" Text="合同详情"
+                   Style="{StaticResource HeadingStyle}" Margin="0,0,0,16"/>
+
+        <!-- Tabs -->
+        <TabControl Grid.Row="1" x:Name="DetailTabs">
+            <!-- Tab 1: Current Info -->
+            <TabItem Header="当前信息">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="合同名称:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="NameText" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="有效期:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="DateRangeText" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="提前提醒:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="ReminderDaysText" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="提醒日期:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="ReminderDateText" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="存储路径:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock x:Name="StoragePathText" TextTrimming="CharacterEllipsis"
+                                           MaxWidth="350" ToolTip="{Binding Text, ElementName=StoragePathText}"/>
+                                <Button Content="📂 打开" Style="{StaticResource ActionButtonStyle}"
+                                        Click="OpenFolderButton_Click" Margin="8,0,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="附件列表:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <ListBox Grid.Row="5" Grid.Column="1" x:Name="AttachmentsListBox"
+                                    Height="80" Margin="0,0,0,8"
+                                    BorderThickness="1" BorderBrush="#CCCCCC"
+                                    MouseDoubleClick="AttachmentsListBox_MouseDoubleClick">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Cursor="Hand"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="备注:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="6" Grid.Column="1" x:Name="NotesText"
+                                       TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 2: History -->
+            <TabItem Header="续签历史">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid Grid.Row="0" x:Name="HistoryGrid"
+                             AutoGenerateColumns="False"
+                             IsReadOnly="True"
+                             HeadersVisibility="Column"
+                             GridLinesVisibility="Horizontal"
+                             BorderThickness="1" BorderBrush="#DDDDDD">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="版本" Binding="{Binding Id}" Width="60"/>
+                            <DataGridTextColumn Header="合同名称" Binding="{Binding Name}" Width="150"/>
+                            <DataGridTextColumn Header="有效期" Binding="{Binding Period}" Width="180"/>
+                            <DataGridTextColumn Header="创建时间" Binding="{Binding CreatedAt}" Width="140"/>
+                            <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Footer -->
+        <Button Grid.Row="2" Content="关闭" Style="{StaticResource SecondaryButtonStyle}"
+                Click="CloseButton_Click" HorizontalAlignment="Right"
+                Width="80" Margin="0,16,0,0"/>
+    </Grid>
+</Window>

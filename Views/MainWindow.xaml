@@ -1,0 +1,153 @@
+<Window x:Class="ContractManager.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ContractManager.Views"
+        mc:Ignorable="d"
+        Title="合同管理系统" Height="680" Width="1200" MinHeight="500" MinWidth="800"
+        WindowStartupLocation="CenterScreen"
+        Closing="Window_Closing">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#E8E8E8" Padding="8,6">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="➕ 新增合同" Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding AddContractCommand}"/>
+
+                <Separator Margin="8,2" Background="#CCCCCC"/>
+
+                <Button Content="📂 打开文件夹" Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding OpenFolderCommand}"/>
+
+                <Separator Margin="8,2" Background="#CCCCCC"/>
+
+                <Button Content="🔄 刷新" Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding RefreshCommand}"/>
+
+                <Separator Margin="8,2" Background="#CCCCCC"/>
+
+                <Button Content="🔔 提醒" Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding CheckRemindersCommand}"/>
+
+                <Separator Margin="8,2" Background="#CCCCCC"/>
+
+                <Button Content="⚙ 设置" Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding OpenSettingsCommand}"/>
+
+                <Button Content="❓ 帮助" Style="{StaticResource ToolbarButtonStyle}"
+                        Click="HelpButton_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Contract List -->
+        <ListView Grid.Row="1" Margin="8"
+                 ItemsSource="{Binding Contracts}"
+                 SelectedItem="{Binding SelectedContract}"
+                 BorderThickness="1" BorderBrush="#DDDDDD"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="合同名称" Width="250">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" FontWeight="Medium"
+                                           VerticalAlignment="Center" Margin="8,0"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="有效期" Width="220">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DateRange}" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="到期状态" Width="120">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayStatusText}"
+                                          Foreground="{Binding RowForeground}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          FontWeight="Medium"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="剩余天数" Width="100">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayRemaining}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="操作" Width="160">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="续签" Style="{StaticResource ActionButtonStyle}"
+                                            Click="RenewButton_Click" Tag="{Binding}"/>
+                                    <Button Content="详情" Style="{StaticResource ActionButtonStyle}"
+                                            Click="DetailButton_Click" Tag="{Binding}" Margin="4,0,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem" BasedOn="{StaticResource ContractListViewItemStyle}">
+                    <Setter Property="Background" Value="{Binding RowBackground}"/>
+                    <Setter Property="Foreground" Value="{Binding RowForeground}"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#E3F2FD"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="续签" Command="{Binding RenewContractCommand}"/>
+                    <MenuItem Header="编辑" Command="{Binding EditContractCommand}"/>
+                    <MenuItem Header="删除" Command="{Binding DeleteContractCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="打开文件夹" Command="{Binding OpenFolderCommand}"/>
+                </ContextMenu>
+            </ListView.ContextMenu>
+        </ListView>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="#F5F5F5" Padding="8,4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource StatusBarTextStyle}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding LastRefreshText}" Style="{StaticResource StatusBarTextStyle}"/>
+                </Grid>
+                <TextBlock Grid.Row="1" Text="Copyright © 2026 王哥出品"
+                           FontFamily="Microsoft YaHei UI" FontSize="10"
+                           Foreground="#AAAAAA" HorizontalAlignment="Center"
+                           Margin="0,2,0,0"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

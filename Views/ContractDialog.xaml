@@ -1,0 +1,102 @@
+<Window x:Class="ContractManager.Views.ContractDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="合同管理" Height="580" Width="520"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" x:Name="HeaderText" Text="新增合同"
+                   Style="{StaticResource HeadingStyle}" Margin="0,0,0,16"/>
+
+        <!-- Form -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Contract Name -->
+                <TextBlock Text="合同名称 *" Style="{StaticResource FormLabelStyle}"/>
+                <TextBox x:Name="NameTextBox" Style="{StaticResource FormTextBoxStyle}"/>
+
+                <!-- Dates -->
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="开始日期 *" Style="{StaticResource FormLabelStyle}"/>
+                        <DatePicker x:Name="StartDatePicker" FontSize="13" Padding="8,6"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="结束日期 *" Style="{StaticResource FormLabelStyle}"/>
+                        <DatePicker x:Name="EndDatePicker" FontSize="13" Padding="8,6"
+                                   SelectedDateChanged="EndDatePicker_SelectedDateChanged"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Reminder Days -->
+                <TextBlock Text="提前提醒天数" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <Slider x:Name="ReminderDaysSlider"
+                            Minimum="1" Maximum="365" Value="90"
+                            TickFrequency="30" IsSnapToTickEnabled="False"
+                            ValueChanged="ReminderDaysSlider_ValueChanged"/>
+                    <TextBox Grid.Column="1" x:Name="ReminderDaysTextBox"
+                            Text="{Binding ElementName=ReminderDaysSlider, Path=Value, StringFormat=F0}"
+                            Style="{StaticResource FormTextBoxStyle}"
+                            TextAlignment="Center" Margin="8,0,0,0"/>
+                </Grid>
+
+                <!-- Reminder Date Preview -->
+                <TextBlock Text="提醒日期（预览）" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
+                <TextBlock x:Name="ReminderDatePreview" Text="" Foreground="#666666"
+                           FontSize="13" Margin="0,0,0,12"/>
+
+                <!-- Notes -->
+                <TextBlock Text="备注" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
+                <TextBox x:Name="NotesTextBox" Style="{StaticResource FormTextBoxStyle}"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         Height="80" VerticalScrollBarVisibility="Auto"/>
+
+                <!-- Attachments -->
+                <TextBlock Text="附件" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
+                <Button Content="📁 选择文件" Style="{StaticResource ToolbarButtonStyle}"
+                        Click="SelectFileButton_Click" HorizontalAlignment="Left"/>
+                <ListBox x:Name="AttachmentsListBox" Height="80" Margin="0,4,0,0"
+                         BorderThickness="1" BorderBrush="#CCCCCC"
+                         AllowDrop="True" Drop="AttachmentsListBox_Drop"
+                         MouseMove="AttachmentsListBox_MouseMove">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="保存" Style="{StaticResource PrimaryButtonStyle}"
+                    Click="SaveButton_Click" Width="80"/>
+            <Button Content="取消" Style="{StaticResource SecondaryButtonStyle}"
+                    Click="CancelButton_Click" Width="80" Margin="8,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>
