@@ -9,11 +9,13 @@ namespace ContractManager.Services
 {
     public class DatabaseService : IDisposable
     {
-        private readonly SqliteConnection _connection;
+        private readonly string _dbPath;
+        private SqliteConnection _connection;
         private bool _disposed;
 
         public DatabaseService(string dbPath)
         {
+            _dbPath = dbPath;
             _connection = new SqliteConnection("Data Source=" + dbPath);
             _connection.Open();
 
@@ -414,6 +416,57 @@ namespace ContractManager.Services
                 _connection?.Dispose();
                 _disposed = true;
             }
+        }
+
+        /// <summary>
+        /// Export the database to a backup file using VACUUM INTO.
+        /// Does not require closing the current connection.
+        /// </summary>
+        public void ExportBackup(string targetPath)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = $"VACUUM INTO '{targetPath.Replace("'", "''")}'";
+            cmd.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Import a backup file, replacing the current database.
+        /// Closes the connection, replaces the file, then reopens.
+        /// </summary>
+        public void ImportBackup(string sourcePath)
+        {
+            if (_disposed) throw new ObjectDisposedException(nameof(DatabaseService));
+
+            // Close current connection
+            _connection.Close();
+            _connection.Dispose();
+
+            try
+            {
+                // Replace current db with backup
+                File.Copy(sourcePath, _dbPath, overwrite: true);
+            }
+            catch
+            {
+                // Restore attempt: reopen original if copy failed
+                try
+                {
+                    _connection = new SqliteConnection("Data Source=" + _dbPath);
+                    _connection.Open();
+                }
+                catch { }
+                throw;
+            }
+
+            // Reopen connection
+            _connection = new SqliteConnection("Data Source=" + _dbPath);
+            _connection.Open();
+
+            using var init = _connection.CreateCommand();
+            init.CommandText = "PRAGMA foreign_keys = ON";
+            init.ExecuteNonQuery();
+            init.CommandText = "PRAGMA journal_mode = WAL";
+            init.ExecuteNonQuery();
         }
     }
 }
