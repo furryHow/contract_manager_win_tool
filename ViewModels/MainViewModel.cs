@@ -346,9 +346,13 @@ namespace ContractManager.ViewModels
 
         private void ExecuteOpenSettings(object? _)
         {
-            var dialog = new Views.SettingsDialog(_config);
+            var dialog = new Views.SettingsDialog(_config, _db);
             dialog.Owner = OwnerWindow ?? Application.Current.MainWindow;
             dialog.ShowDialog();
+
+            // If a backup was imported, reload the contract list
+            if (dialog.BackupImported)
+                LoadContracts();
         }
 
         private void ExecuteRefresh(object? _)

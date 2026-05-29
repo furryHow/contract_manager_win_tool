@@ -11,12 +11,21 @@ namespace ContractManager.Views
     {
         private readonly ConfigManager _config;
         private readonly ReminderService _reminderService;
+        private readonly DatabaseService? _db;
 
-        public SettingsDialog(ConfigManager config)
+        /// <summary>
+        /// Whether a backup import was performed and the caller should reload data.
+        /// </summary>
+        public bool BackupImported { get; private set; }
+
+        public SettingsDialog(ConfigManager config) : this(config, null) { }
+
+        public SettingsDialog(ConfigManager config, DatabaseService? db)
         {
             InitializeComponent();
 
             _config = config;
+            _db = db;
             _reminderService = new ReminderService();
 
             LoadSettings();
@@ -165,6 +174,85 @@ namespace ContractManager.Views
 
             DialogResult = true;
             Close();
+        }
+
+        private void ExportBackupButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_db == null)
+            {
+                MessageBox.Show("数据库服务不可用。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "SQLite 数据库|*.db|所有文件|*.*",
+                DefaultExt = ".db",
+                FileName = $"ContractManager_备份_{DateTime.Now:yyyyMMdd_HHmmss}.db"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    _db.ExportBackup(dialog.FileName);
+                    BackupStatusText.Text = $"✓ 备份已导出至: {dialog.FileName}";
+                    BackupStatusText.Foreground = System.Windows.Media.Brushes.Green;
+                    MessageBox.Show($"备份已成功导出至:\n{dialog.FileName}", "导出成功",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    BackupStatusText.Text = $"✗ 导出失败: {ex.Message}";
+                    BackupStatusText.Foreground = System.Windows.Media.Brushes.Red;
+                    MessageBox.Show($"导出备份失败:\n{ex.Message}", "导出失败",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ImportBackupButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_db == null)
+            {
+                MessageBox.Show("数据库服务不可用。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "SQLite 数据库|*.db|所有文件|*.*",
+                DefaultExt = ".db",
+                Title = "选择备份文件"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var confirm = MessageBox.Show(
+                    "导入备份将覆盖当前所有合同数据，此操作不可恢复！\n\n确定要继续吗？",
+                    "确认导入",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (confirm != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    _db.ImportBackup(dialog.FileName);
+                    BackupImported = true;
+                    BackupStatusText.Text = $"✓ 备份已成功导入";
+                    BackupStatusText.Foreground = System.Windows.Media.Brushes.Green;
+                    MessageBox.Show("备份已成功导入，数据已恢复。", "导入成功",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    BackupStatusText.Text = $"✗ 导入失败: {ex.Message}";
+                    BackupStatusText.Foreground = System.Windows.Media.Brushes.Red;
+                    MessageBox.Show($"导入备份失败:\n{ex.Message}", "导入失败",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
