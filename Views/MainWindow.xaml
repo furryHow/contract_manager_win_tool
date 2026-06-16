@@ -56,6 +56,18 @@
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListView.View>
                 <GridView>
+                    <GridViewColumn Header="操作" Width="160">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="续签" Style="{StaticResource ActionButtonStyle}"
+                                            Click="RenewButton_Click" Tag="{Binding}"/>
+                                    <Button Content="详情" Style="{StaticResource ActionButtonStyle}"
+                                            Click="DetailButton_Click" Tag="{Binding}" Margin="4,0,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
                     <GridViewColumn Header="合同名称" Width="250">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
@@ -69,6 +81,26 @@
                             <DataTemplate>
                                 <TextBlock Text="{Binding DateRange}" HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="合同总额" Width="100">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding TotalAmountText}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="未付款" Width="100">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding UnpaidAmountText}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0"/>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
@@ -92,15 +124,16 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="操作" Width="160">
+                    <GridViewColumn Header="已付金额" Width="110">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Content="续签" Style="{StaticResource ActionButtonStyle}"
-                                            Click="RenewButton_Click" Tag="{Binding}"/>
-                                    <Button Content="详情" Style="{StaticResource ActionButtonStyle}"
-                                            Click="DetailButton_Click" Tag="{Binding}" Margin="4,0,0,0"/>
-                                </StackPanel>
+                                <TextBox Text="{Binding PaidAmount, StringFormat=N2, UpdateSourceTrigger=LostFocus}"
+                                         LostFocus="PaidAmount_LostFocus"
+                                         Tag="{Binding}"
+                                         Width="90" HorizontalAlignment="Center"
+                                         TextAlignment="Right"
+                                         VerticalAlignment="Center"
+                                         Padding="2"/>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
