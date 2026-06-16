@@ -40,6 +40,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="合同名称:" FontWeight="Medium" Margin="0,0,0,8"/>
@@ -48,22 +49,32 @@
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="有效期:" FontWeight="Medium" Margin="0,0,0,8"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" x:Name="DateRangeText" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="提前提醒:" FontWeight="Medium" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="ReminderDaysText" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="合同金额:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="总额 " Foreground="#666666"/>
+                                <TextBlock x:Name="TotalAmountText" FontWeight="Medium"/>
+                                <TextBlock Text="　已付 " Foreground="#666666" Margin="16,0,0,0"/>
+                                <TextBlock x:Name="PaidAmountText" FontWeight="Medium"/>
+                                <TextBlock Text="　未付 " Foreground="#666666" Margin="16,0,0,0"/>
+                                <TextBlock x:Name="UnpaidAmountText" FontWeight="Medium" Foreground="#D32F2F"/>
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="提醒日期:" FontWeight="Medium" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="ReminderDateText" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="提前提醒:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="ReminderDaysText" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="存储路径:" FontWeight="Medium" Margin="0,0,0,8"/>
-                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="提醒日期:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="ReminderDateText" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="存储路径:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock x:Name="StoragePathText" TextTrimming="CharacterEllipsis"
                                            MaxWidth="350" ToolTip="{Binding Text, ElementName=StoragePathText}"/>
                                 <Button Content="📂 打开" Style="{StaticResource ActionButtonStyle}"
                                         Click="OpenFolderButton_Click" Margin="8,0,0,0"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="附件列表:" FontWeight="Medium" Margin="0,0,0,8"/>
-                            <ListBox Grid.Row="5" Grid.Column="1" x:Name="AttachmentsListBox"
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="附件列表:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <ListBox Grid.Row="6" Grid.Column="1" x:Name="AttachmentsListBox"
                                     Height="80" Margin="0,0,0,8"
                                     BorderThickness="1" BorderBrush="#CCCCCC"
                                     MouseDoubleClick="AttachmentsListBox_MouseDoubleClick">
@@ -74,8 +85,8 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
 
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="备注:" FontWeight="Medium" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="6" Grid.Column="1" x:Name="NotesText"
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="备注:" FontWeight="Medium" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="7" Grid.Column="1" x:Name="NotesText"
                                        TextWrapping="Wrap" Margin="0,0,0,8"/>
                         </Grid>
                     </StackPanel>
@@ -99,6 +110,8 @@
                             <DataGridTextColumn Header="版本" Binding="{Binding Id}" Width="60"/>
                             <DataGridTextColumn Header="合同名称" Binding="{Binding Name}" Width="150"/>
                             <DataGridTextColumn Header="有效期" Binding="{Binding Period}" Width="180"/>
+                            <DataGridTextColumn Header="合同总额" Binding="{Binding TotalAmount, StringFormat=N2}" Width="90"/>
+                            <DataGridTextColumn Header="已付金额" Binding="{Binding PaidAmount, StringFormat=N2}" Width="90"/>
                             <DataGridTextColumn Header="创建时间" Binding="{Binding CreatedAt}" Width="140"/>
                             <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="*"/>
                         </DataGrid.Columns>

@@ -44,6 +44,9 @@ namespace ContractManager.Views
 
             NameText.Text = contract.Name;
             DateRangeText.Text = $"{contract.StartDate} - {contract.EndDate}";
+            TotalAmountText.Text = contract.TotalAmount.ToString("N2");
+            PaidAmountText.Text = contract.PaidAmount.ToString("N2");
+            UnpaidAmountText.Text = (contract.TotalAmount - contract.PaidAmount).ToString("N2");
             ReminderDaysText.Text = $"提前 {contract.ReminderDays} 天";
             ReminderDateText.Text = contract.ReminderDate ?? "-";
             StoragePathText.Text = contract.StoragePath ?? "";
@@ -73,6 +76,8 @@ namespace ContractManager.Views
                     Id = c.Id,
                     Name = c.Name,
                     Period = $"{c.StartDate} - {c.EndDate}",
+                    TotalAmount = c.TotalAmount,
+                    PaidAmount = c.PaidAmount,
                     CreatedAt = c.CreatedAt,
                     Notes = c.Notes ?? ""
                 });
@@ -133,6 +138,8 @@ namespace ContractManager.Views
             public long Id { get; set; }
             public string Name { get; set; } = "";
             public string Period { get; set; } = "";
+            public decimal TotalAmount { get; set; }
+            public decimal PaidAmount { get; set; }
             public string CreatedAt { get; set; } = "";
             public string Notes { get; set; } = "";
         }
