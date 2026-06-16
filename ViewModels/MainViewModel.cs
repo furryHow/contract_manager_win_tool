@@ -45,10 +45,12 @@ namespace ContractManager.ViewModels
     public class ContractViewModel : BaseViewModel
     {
         private readonly ContractStatusInfo _contract;
+        private decimal _paidAmount;
 
         public ContractViewModel(ContractStatusInfo contract)
         {
             _contract = contract;
+            _paidAmount = contract.PaidAmount;
         }
 
         public long Id => _contract.Id;
@@ -60,6 +62,24 @@ namespace ContractManager.ViewModels
         public int ReminderDays => _contract.ReminderDays;
         public string? Notes => _contract.Notes;
         public string? StoragePath => _contract.StoragePath;
+
+        public decimal TotalAmount => _contract.TotalAmount;
+
+        public decimal PaidAmount
+        {
+            get => _paidAmount;
+            set
+            {
+                if (SetProperty(ref _paidAmount, value))
+                    OnPropertyChanged(nameof(UnpaidAmount));
+            }
+        }
+
+        public decimal UnpaidAmount => TotalAmount - PaidAmount;
+
+        public string TotalAmountText => TotalAmount.ToString("N2");
+        public string UnpaidAmountText => UnpaidAmount.ToString("N2");
+
         public int Remaining => _contract.Remaining;
         public string Status => _contract.Status;
         public string StatusText => _contract.StatusText;
@@ -244,7 +264,7 @@ namespace ContractManager.ViewModels
             if (dialog.ShowDialog() == true && dialog.Contract != null)
             {
                 var contract = dialog.Contract;
-                var id = _db.AddContract(contract.Name, contract.StartDate, contract.EndDate, contract.ReminderDays, contract.Notes, contract.StoragePath);
+                var id = _db.AddContract(contract.Name, contract.StartDate, contract.EndDate, contract.ReminderDays, contract.Notes, contract.StoragePath, contract.TotalAmount, contract.PaidAmount);
 
                 LoadContracts();
             }
@@ -264,14 +284,16 @@ namespace ContractManager.ViewModels
                 EndDate = cvm.EndDate,
                 ReminderDays = cvm.ReminderDays,
                 Notes = cvm.Notes,
-                StoragePath = cvm.StoragePath
+                StoragePath = cvm.StoragePath,
+                TotalAmount = cvm.TotalAmount,
+                PaidAmount = cvm.PaidAmount
             };
             var dialog = new Views.ContractDialog(contract, _config, isRenew: true);
             dialog.Owner = OwnerWindow ?? Application.Current.MainWindow;
             if (dialog.ShowDialog() == true && dialog.Contract != null)
             {
                 var renewed = dialog.Contract;
-                _db.RenewContract(cvm.Id, renewed.Name, renewed.StartDate, renewed.EndDate, renewed.Notes, renewed.StoragePath);
+                _db.RenewContract(cvm.Id, renewed.Name, renewed.StartDate, renewed.EndDate, renewed.Notes, renewed.StoragePath, renewed.TotalAmount, renewed.PaidAmount);
 
                 LoadContracts();
             }
@@ -290,14 +312,16 @@ namespace ContractManager.ViewModels
                 EndDate = cvm.EndDate,
                 ReminderDays = cvm.ReminderDays,
                 Notes = cvm.Notes,
-                StoragePath = cvm.StoragePath
+                StoragePath = cvm.StoragePath,
+                TotalAmount = cvm.TotalAmount,
+                PaidAmount = cvm.PaidAmount
             };
             var dialog = new Views.ContractDialog(contract, _config, isEdit: true);
             dialog.Owner = OwnerWindow ?? Application.Current.MainWindow;
             if (dialog.ShowDialog() == true && dialog.Contract != null)
             {
                 var c = dialog.Contract;
-                _db.UpdateContract(c.Id, c.Name, c.StartDate, c.EndDate, c.ReminderDays, c.Notes, c.StoragePath);
+                _db.UpdateContract(c.Id, c.Name, c.StartDate, c.EndDate, c.ReminderDays, c.Notes, c.StoragePath, c.TotalAmount, c.PaidAmount);
 
                 LoadContracts();
             }
@@ -358,6 +382,17 @@ namespace ContractManager.ViewModels
         private void ExecuteRefresh(object? _)
         {
             LoadContracts();
+        }
+
+        public void UpdatePaidAmount(long id, decimal paidAmount)
+        {
+            try
+            {
+                _db.UpdatePaidAmount(id, paidAmount);
+            }
+            catch
+            {
+            }
         }
 
         private void ExecuteViewDetail(object? _)
