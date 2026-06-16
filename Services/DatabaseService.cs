@@ -43,7 +43,9 @@ namespace ContractManager.Services
                 "    is_current INTEGER DEFAULT 1," +
                 "    notes TEXT," +
                 "    storage_path TEXT," +
-                "    created_at TEXT DEFAULT (datetime('now','localtime'))" +
+                "    created_at TEXT DEFAULT (datetime('now','localtime'))," +
+                "    total_amount REAL DEFAULT 0," +
+                "    paid_amount REAL DEFAULT 0" +
                 ")";
             cmd.ExecuteNonQuery();
 
@@ -83,6 +85,16 @@ namespace ContractManager.Services
                 cmd.CommandText = "ALTER TABLE contracts ADD COLUMN reminder_date TEXT";
                 cmd.ExecuteNonQuery();
                 BackfillReminderDates();
+            }
+            if (!cols.Contains("total_amount"))
+            {
+                cmd.CommandText = "ALTER TABLE contracts ADD COLUMN total_amount REAL DEFAULT 0";
+                cmd.ExecuteNonQuery();
+            }
+            if (!cols.Contains("paid_amount"))
+            {
+                cmd.CommandText = "ALTER TABLE contracts ADD COLUMN paid_amount REAL DEFAULT 0";
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -128,6 +140,8 @@ namespace ContractManager.Services
                 Notes = reader.IsDBNull(8) ? null : reader.GetString(8),
                 StoragePath = reader.IsDBNull(9) ? null : reader.GetString(9),
                 CreatedAt = reader.IsDBNull(10) ? "" : reader.GetString(10),
+                TotalAmount = reader.IsDBNull(11) ? 0 : reader.GetDecimal(11),
+                PaidAmount = reader.IsDBNull(12) ? 0 : reader.GetDecimal(12),
             };
         }
 
@@ -143,11 +157,12 @@ namespace ContractManager.Services
 
 
         public long AddContract(string name, string startDate, string endDate,
-            int reminderDays = 90, string? notes = null, string? storagePath = null)
+            int reminderDays = 90, string? notes = null, string? storagePath = null,
+            decimal totalAmount = 0, decimal paidAmount = 0)
         {
             var reminderDate = CalcReminderDate(endDate, reminderDays);
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "INSERT INTO contracts (name, start_date, end_date, reminder_days, reminder_date, notes, storage_path, is_current) VALUES (@name, @start, @end, @days, @rd, @notes, @sp, 1)";
+            cmd.CommandText = "INSERT INTO contracts (name, start_date, end_date, reminder_days, reminder_date, notes, storage_path, is_current, total_amount, paid_amount) VALUES (@name, @start, @end, @days, @rd, @notes, @sp, 1, @ta, @pa)";
             cmd.Parameters.AddWithValue("@name", name);
             cmd.Parameters.AddWithValue("@start", startDate);
             cmd.Parameters.AddWithValue("@end", endDate);
@@ -155,6 +170,8 @@ namespace ContractManager.Services
             cmd.Parameters.AddWithValue("@rd", reminderDate ?? (object?)DBNull.Value);
             cmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
             cmd.Parameters.AddWithValue("@sp", storagePath ?? (object?)DBNull.Value);
+            cmd.Parameters.AddWithValue("@ta", totalAmount);
+            cmd.Parameters.AddWithValue("@pa", paidAmount);
             cmd.ExecuteNonQuery();
             cmd.CommandText = "SELECT last_insert_rowid()";
             var newId = (long)cmd.ExecuteScalar()!;
@@ -167,7 +184,8 @@ namespace ContractManager.Services
         }
 
         public long? RenewContract(long contractId, string newName, string newStart, string newEnd,
-            string? notes = null, string? storagePath = null)
+            string? notes = null, string? storagePath = null,
+            decimal totalAmount = 0, decimal paidAmount = 0)
         {
             using var getCmd = _connection.CreateCommand();
             getCmd.CommandText = "SELECT group_id, reminder_days FROM contracts WHERE id = @id";
@@ -186,7 +204,7 @@ namespace ContractManager.Services
             upCmd.Parameters.AddWithValue("@id", contractId);
             upCmd.ExecuteNonQuery();
             using var insCmd = _connection.CreateCommand();
-            insCmd.CommandText = "INSERT INTO contracts (group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path) VALUES (@gid, @name, @start, @end, @days, @rd, 1, @notes, @sp)";
+            insCmd.CommandText = "INSERT INTO contracts (group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path, total_amount, paid_amount) VALUES (@gid, @name, @start, @end, @days, @rd, 1, @notes, @sp, @ta, @pa)";
             insCmd.Parameters.AddWithValue("@gid", groupId);
             insCmd.Parameters.AddWithValue("@name", newName);
             insCmd.Parameters.AddWithValue("@start", newStart);
@@ -195,6 +213,8 @@ namespace ContractManager.Services
             insCmd.Parameters.AddWithValue("@rd", reminderDate ?? (object?)DBNull.Value);
             insCmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
             insCmd.Parameters.AddWithValue("@sp", storagePath ?? (object?)DBNull.Value);
+            insCmd.Parameters.AddWithValue("@ta", totalAmount);
+            insCmd.Parameters.AddWithValue("@pa", paidAmount);
             insCmd.ExecuteNonQuery();
             insCmd.CommandText = "SELECT last_insert_rowid()";
             var newId = (long)insCmd.ExecuteScalar()!;
@@ -205,7 +225,7 @@ namespace ContractManager.Services
         public List<ContractRecord> GetCurrentContracts()
         {
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "SELECT * FROM contracts WHERE is_current = 1 ORDER BY end_date ASC";
+            cmd.CommandText = "SELECT id, group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path, created_at, total_amount, paid_amount FROM contracts WHERE is_current = 1 ORDER BY end_date ASC";
             using var reader = cmd.ExecuteReader();
             var result = new List<ContractRecord>();
             while (reader.Read()) result.Add(ReadContract(reader));
@@ -215,7 +235,7 @@ namespace ContractManager.Services
         public ContractRecord? GetContract(long id)
         {
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "SELECT * FROM contracts WHERE id = @id";
+            cmd.CommandText = "SELECT id, group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path, created_at, total_amount, paid_amount FROM contracts WHERE id = @id";
             cmd.Parameters.AddWithValue("@id", id);
             using var reader = cmd.ExecuteReader();
             if (reader.Read()) return ReadContract(reader);
@@ -234,7 +254,7 @@ namespace ContractManager.Services
                 groupId = reader.IsDBNull(0) ? contractId : reader.GetInt64(0);
             }
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "SELECT * FROM contracts WHERE id = @gid OR group_id = @gid2 ORDER BY created_at ASC";
+            cmd.CommandText = "SELECT id, group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path, created_at, total_amount, paid_amount FROM contracts WHERE id = @gid OR group_id = @gid2 ORDER BY created_at ASC";
             cmd.Parameters.AddWithValue("@gid", groupId);
             cmd.Parameters.AddWithValue("@gid2", groupId);
             using var reader2 = cmd.ExecuteReader();
@@ -244,11 +264,12 @@ namespace ContractManager.Services
         }
 
         public void UpdateContract(long id, string name, string startDate, string endDate,
-            int reminderDays, string? notes = null, string? storagePath = null)
+            int reminderDays, string? notes = null, string? storagePath = null,
+            decimal totalAmount = 0, decimal paidAmount = 0)
         {
             var reminderDate = CalcReminderDate(endDate, reminderDays);
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "UPDATE contracts SET name = @name, start_date = @start, end_date = @end, reminder_days = @days, reminder_date = @rd, notes = @notes, storage_path = @sp WHERE id = @id";
+            cmd.CommandText = "UPDATE contracts SET name = @name, start_date = @start, end_date = @end, reminder_days = @days, reminder_date = @rd, notes = @notes, storage_path = @sp, total_amount = @ta, paid_amount = @pa WHERE id = @id";
             cmd.Parameters.AddWithValue("@name", name);
             cmd.Parameters.AddWithValue("@start", startDate);
             cmd.Parameters.AddWithValue("@end", endDate);
@@ -256,6 +277,17 @@ namespace ContractManager.Services
             cmd.Parameters.AddWithValue("@rd", reminderDate ?? (object?)DBNull.Value);
             cmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
             cmd.Parameters.AddWithValue("@sp", storagePath ?? (object?)DBNull.Value);
+            cmd.Parameters.AddWithValue("@ta", totalAmount);
+            cmd.Parameters.AddWithValue("@pa", paidAmount);
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+
+        public void UpdatePaidAmount(long id, decimal paidAmount)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "UPDATE contracts SET paid_amount = @pa WHERE id = @id";
+            cmd.Parameters.AddWithValue("@pa", paidAmount);
             cmd.Parameters.AddWithValue("@id", id);
             cmd.ExecuteNonQuery();
         }
@@ -388,7 +420,7 @@ namespace ContractManager.Services
                 else if (remaining <= c.ReminderDays) { status = "expiring"; statusText = "\u5373\u5c06\u5230\u671f(" + remaining + "\u5929)"; sortKey = -2; }
                 else if (remaining <= c.ReminderDays * 2) { status = "warning"; statusText = "\u6b63\u5e38(" + remaining + "\u5929)"; sortKey = -1; }
                 else { status = "normal"; statusText = "\u6b63\u5e38(" + remaining + "\u5929)"; sortKey = remaining; }
-                result.Add(new ContractStatusInfo { Id = c.Id, GroupId = c.GroupId, Name = c.Name, StartDate = c.StartDate, EndDate = c.EndDate, ReminderDays = c.ReminderDays, ReminderDate = c.ReminderDate, Notes = c.Notes, StoragePath = c.StoragePath, Remaining = remaining, Status = status, StatusText = statusText, SortKey = sortKey });
+                result.Add(new ContractStatusInfo { Id = c.Id, GroupId = c.GroupId, Name = c.Name, StartDate = c.StartDate, EndDate = c.EndDate, ReminderDays = c.ReminderDays, ReminderDate = c.ReminderDate, Notes = c.Notes, StoragePath = c.StoragePath, TotalAmount = c.TotalAmount, PaidAmount = c.PaidAmount, Remaining = remaining, Status = status, StatusText = statusText, SortKey = sortKey });
             }
             result.Sort((a, b) => a.SortKey.CompareTo(b.SortKey));
             return result;
