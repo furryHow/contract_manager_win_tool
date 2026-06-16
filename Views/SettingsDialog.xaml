@@ -62,6 +62,12 @@
                     <TextBlock Text="Webhook URL" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox x:Name="WebhookUrlTextBox" Style="{StaticResource FormTextBoxStyle}"
                              Height="60" AcceptsReturn="True" TextWrapping="Wrap"/>
+                    <TextBlock FontSize="11" Margin="0,4,0,0">
+                        <Hyperlink NavigateUri="https://www.tencentcloud.com/zh/document/product/1254/78645"
+                                   RequestNavigate="GetWebhookLink_RequestNavigate">
+                            获取 Webhook
+                        </Hyperlink>
+                    </TextBlock>
 
                     <Button Content="测试连接" Style="{StaticResource PrimaryButtonStyle}"
                             Click="TestWebhookButton_Click"
