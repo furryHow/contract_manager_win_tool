@@ -1,0 +1,45 @@
+<Window x:Class="ContractManager.Views.PaymentInputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="添加付款" Height="300" Width="400"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="添加付款记录"
+                   Style="{StaticResource HeadingStyle}" Margin="0,0,0,16"/>
+
+        <!-- Form -->
+        <StackPanel Grid.Row="1">
+            <!-- Amount -->
+            <TextBlock Text="付款金额 *" Style="{StaticResource FormLabelStyle}"/>
+            <TextBox x:Name="AmountTextBox" Style="{StaticResource FormTextBoxStyle}"
+                     Text="0" TextAlignment="Right"/>
+
+            <!-- Date -->
+            <TextBlock Text="付款日期 *" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
+            <DatePicker x:Name="PaymentDatePicker" FontSize="13" Padding="8,6"/>
+
+            <!-- Notes -->
+            <TextBlock Text="备注" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
+            <TextBox x:Name="NotesTextBox" Style="{StaticResource FormTextBoxStyle}"
+                     AcceptsReturn="True" TextWrapping="Wrap"
+                     Height="60" VerticalScrollBarVisibility="Auto"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="确定" Style="{StaticResource PrimaryButtonStyle}"
+                    Click="OkButton_Click" Width="80"/>
+            <Button Content="取消" Style="{StaticResource SecondaryButtonStyle}"
+                    Click="CancelButton_Click" Width="80" Margin="8,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>
