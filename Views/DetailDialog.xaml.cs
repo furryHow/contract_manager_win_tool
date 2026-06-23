@@ -109,6 +109,23 @@ namespace ContractManager.Views
             var dialog = new PaymentInputDialog();
             if (dialog.ShowDialog() == true)
             {
+                // 验证累计付款不超过合同总额
+                var totalPaid = _db.GetTotalPaidAmount(_contractId);
+                var contract = _db.GetContract(_contractId);
+                if (contract != null && totalPaid + dialog.Amount > contract.TotalAmount)
+                {
+                    MessageBox.Show(
+                        $"累计付款金额将超过合同总额。\n\n" +
+                        $"合同总额: {contract.TotalAmount:N2} 元\n" +
+                        $"已付金额: {totalPaid:N2} 元\n" +
+                        $"本次付款: {dialog.Amount:N2} 元\n" +
+                        $"超出金额: {(totalPaid + dialog.Amount - contract.TotalAmount):N2} 元",
+                        "验证失败",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
                 _db.AddPaymentRecord(_contractId, dialog.Amount, dialog.PaymentDate, dialog.Notes);
                 LoadPaymentRecords();
                 LoadContractDetails();

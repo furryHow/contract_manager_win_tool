@@ -237,7 +237,7 @@ namespace ContractManager.Services
 
         public long? RenewContract(long contractId, string newName, string newStart, string newEnd,
             string? notes = null, string? storagePath = null,
-            decimal totalAmount = 0, decimal paidAmount = 0)
+            decimal totalAmount = 0)
         {
             using var getCmd = _connection.CreateCommand();
             getCmd.CommandText = "SELECT group_id, reminder_days FROM contracts WHERE id = @id";
@@ -256,7 +256,7 @@ namespace ContractManager.Services
             upCmd.Parameters.AddWithValue("@id", contractId);
             upCmd.ExecuteNonQuery();
             using var insCmd = _connection.CreateCommand();
-            insCmd.CommandText = "INSERT INTO contracts (group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path, total_amount, paid_amount) VALUES (@gid, @name, @start, @end, @days, @rd, 1, @notes, @sp, @ta, @pa)";
+            insCmd.CommandText = "INSERT INTO contracts (group_id, name, start_date, end_date, reminder_days, reminder_date, is_current, notes, storage_path, total_amount) VALUES (@gid, @name, @start, @end, @days, @rd, 1, @notes, @sp, @ta)";
             insCmd.Parameters.AddWithValue("@gid", groupId);
             insCmd.Parameters.AddWithValue("@name", newName);
             insCmd.Parameters.AddWithValue("@start", newStart);
@@ -266,7 +266,6 @@ namespace ContractManager.Services
             insCmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
             insCmd.Parameters.AddWithValue("@sp", storagePath ?? (object?)DBNull.Value);
             insCmd.Parameters.AddWithValue("@ta", totalAmount);
-            insCmd.Parameters.AddWithValue("@pa", paidAmount);
             insCmd.ExecuteNonQuery();
             insCmd.CommandText = "SELECT last_insert_rowid()";
             var newId = (long)insCmd.ExecuteScalar()!;
@@ -317,11 +316,11 @@ namespace ContractManager.Services
 
         public void UpdateContract(long id, string name, string startDate, string endDate,
             int reminderDays, string? notes = null, string? storagePath = null,
-            decimal totalAmount = 0, decimal paidAmount = 0)
+            decimal totalAmount = 0)
         {
             var reminderDate = CalcReminderDate(endDate, reminderDays);
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "UPDATE contracts SET name = @name, start_date = @start, end_date = @end, reminder_days = @days, reminder_date = @rd, notes = @notes, storage_path = @sp, total_amount = @ta, paid_amount = @pa WHERE id = @id";
+            cmd.CommandText = "UPDATE contracts SET name = @name, start_date = @start, end_date = @end, reminder_days = @days, reminder_date = @rd, notes = @notes, storage_path = @sp, total_amount = @ta WHERE id = @id";
             cmd.Parameters.AddWithValue("@name", name);
             cmd.Parameters.AddWithValue("@start", startDate);
             cmd.Parameters.AddWithValue("@end", endDate);
@@ -330,16 +329,6 @@ namespace ContractManager.Services
             cmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
             cmd.Parameters.AddWithValue("@sp", storagePath ?? (object?)DBNull.Value);
             cmd.Parameters.AddWithValue("@ta", totalAmount);
-            cmd.Parameters.AddWithValue("@pa", paidAmount);
-            cmd.Parameters.AddWithValue("@id", id);
-            cmd.ExecuteNonQuery();
-        }
-
-        public void UpdatePaidAmount(long id, decimal paidAmount)
-        {
-            using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "UPDATE contracts SET paid_amount = @pa WHERE id = @id";
-            cmd.Parameters.AddWithValue("@pa", paidAmount);
             cmd.Parameters.AddWithValue("@id", id);
             cmd.ExecuteNonQuery();
         }

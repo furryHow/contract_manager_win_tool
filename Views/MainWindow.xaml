@@ -124,16 +124,13 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="已付金额" Width="110">
+                    <GridViewColumn Header="已付金额" Width="100">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBox Text="{Binding PaidAmount, StringFormat=N2, UpdateSourceTrigger=LostFocus}"
-                                         LostFocus="PaidAmount_LostFocus"
-                                         Tag="{Binding}"
-                                         Width="90" HorizontalAlignment="Center"
-                                         TextAlignment="Right"
-                                         VerticalAlignment="Center"
-                                         Padding="2"/>
+                                <TextBlock Text="{Binding PaidAmountText}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0"/>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>

@@ -78,6 +78,7 @@ namespace ContractManager.ViewModels
         public decimal UnpaidAmount => TotalAmount - PaidAmount;
 
         public string TotalAmountText => TotalAmount.ToString("N2");
+        public string PaidAmountText => PaidAmount.ToString("N2");
         public string UnpaidAmountText => UnpaidAmount.ToString("N2");
 
         public int Remaining => _contract.Remaining;
@@ -293,7 +294,7 @@ namespace ContractManager.ViewModels
             if (dialog.ShowDialog() == true && dialog.Contract != null)
             {
                 var renewed = dialog.Contract;
-                _db.RenewContract(cvm.Id, renewed.Name, renewed.StartDate, renewed.EndDate, renewed.Notes, renewed.StoragePath, renewed.TotalAmount, renewed.PaidAmount);
+                _db.RenewContract(cvm.Id, renewed.Name, renewed.StartDate, renewed.EndDate, renewed.Notes, renewed.StoragePath, renewed.TotalAmount);
 
                 LoadContracts();
             }
@@ -321,7 +322,7 @@ namespace ContractManager.ViewModels
             if (dialog.ShowDialog() == true && dialog.Contract != null)
             {
                 var c = dialog.Contract;
-                _db.UpdateContract(c.Id, c.Name, c.StartDate, c.EndDate, c.ReminderDays, c.Notes, c.StoragePath, c.TotalAmount, c.PaidAmount);
+                _db.UpdateContract(c.Id, c.Name, c.StartDate, c.EndDate, c.ReminderDays, c.Notes, c.StoragePath, c.TotalAmount);
 
                 LoadContracts();
             }
@@ -382,17 +383,6 @@ namespace ContractManager.ViewModels
         private void ExecuteRefresh(object? _)
         {
             LoadContracts();
-        }
-
-        public void UpdatePaidAmount(long id, decimal paidAmount)
-        {
-            try
-            {
-                _db.UpdatePaidAmount(id, paidAmount);
-            }
-            catch
-            {
-            }
         }
 
         private void ExecuteViewDetail(object? _)

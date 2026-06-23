@@ -71,22 +71,5 @@ namespace ContractManager.Views
                 _viewModel.ViewDetailCommand.Execute(null);
             }
         }
-
-        private void PaidAmount_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (sender is TextBox tb && tb.Tag is ContractViewModel cvm)
-            {
-                if (decimal.TryParse(tb.Text, out var paidAmount) && paidAmount >= 0)
-                {
-                    _viewModel.UpdatePaidAmount(cvm.Id, paidAmount);
-                    cvm.PaidAmount = paidAmount;
-                }
-                else
-                {
-                    MessageBox.Show("请输入有效的非负数值。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    tb.Text = cvm.PaidAmount.ToString("N2");
-                }
-            }
-        }
     }
 }
