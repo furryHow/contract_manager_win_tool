@@ -243,7 +243,7 @@ namespace ContractManager.Views
                 Notes = NotesTextBox.Text,
                 StoragePath = storagePath,
                 TotalAmount = totalAmount,
-                PaidAmount = 0
+                PaidAmount = _originalContract?.PaidAmount ?? 0
             };
 
             if (_attachmentFiles.Count > 0)

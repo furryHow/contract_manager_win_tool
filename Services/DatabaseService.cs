@@ -356,6 +356,16 @@ namespace ContractManager.Services
             cmd.Parameters.AddWithValue("@date", paymentDate);
             cmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
             cmd.ExecuteNonQuery();
+
+            // 同步更新 contracts.paid_amount
+            cmd.CommandText = "SELECT COALESCE(SUM(amount), 0) FROM payment_records WHERE contract_id = @cid";
+            var totalPaid = (decimal)cmd.ExecuteScalar()!;
+            cmd.CommandText = "UPDATE contracts SET paid_amount = @pa WHERE id = @cid";
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@pa", totalPaid);
+            cmd.Parameters.AddWithValue("@cid", contractId);
+            cmd.ExecuteNonQuery();
+
             cmd.CommandText = "SELECT last_insert_rowid()";
             return (long)cmd.ExecuteScalar()!;
         }
@@ -391,8 +401,24 @@ namespace ContractManager.Services
         public void DeletePaymentRecord(long paymentId)
         {
             using var cmd = _connection.CreateCommand();
-            cmd.CommandText = "DELETE FROM payment_records WHERE id = @id";
+
+            // 先获取合同ID，以便后续同步 paid_amount
+            cmd.CommandText = "SELECT contract_id FROM payment_records WHERE id = @id";
             cmd.Parameters.AddWithValue("@id", paymentId);
+            var result = cmd.ExecuteScalar();
+            if (result == null || result is DBNull) return;
+            var contractId = (long)result;
+
+            cmd.CommandText = "DELETE FROM payment_records WHERE id = @id";
+            cmd.ExecuteNonQuery();
+
+            // 同步更新 contracts.paid_amount
+            cmd.CommandText = "SELECT COALESCE(SUM(amount), 0) FROM payment_records WHERE contract_id = @cid";
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@cid", contractId);
+            var totalPaid = (decimal)cmd.ExecuteScalar()!;
+            cmd.CommandText = "UPDATE contracts SET paid_amount = @pa WHERE id = @cid";
+            cmd.Parameters.AddWithValue("@pa", totalPaid);
             cmd.ExecuteNonQuery();
         }
 

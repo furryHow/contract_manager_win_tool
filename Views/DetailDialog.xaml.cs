@@ -46,8 +46,9 @@ namespace ContractManager.Views
             NameText.Text = contract.Name;
             DateRangeText.Text = $"{contract.StartDate} - {contract.EndDate}";
             TotalAmountText.Text = contract.TotalAmount.ToString("N2");
-            PaidAmountText.Text = contract.PaidAmount.ToString("N2");
-            UnpaidAmountText.Text = (contract.TotalAmount - contract.PaidAmount).ToString("N2");
+            var paidFromRecords = _db.GetTotalPaidAmount(_contractId);
+            PaidAmountText.Text = paidFromRecords.ToString("N2");
+            UnpaidAmountText.Text = (contract.TotalAmount - paidFromRecords).ToString("N2");
             ReminderDaysText.Text = $"提前 {contract.ReminderDays} 天";
             ReminderDateText.Text = contract.ReminderDate ?? "-";
             StoragePathText.Text = contract.StoragePath ?? "";
@@ -110,6 +111,7 @@ namespace ContractManager.Views
             {
                 _db.AddPaymentRecord(_contractId, dialog.Amount, dialog.PaymentDate, dialog.Notes);
                 LoadPaymentRecords();
+                LoadContractDetails();
             }
         }
 
@@ -124,6 +126,7 @@ namespace ContractManager.Views
                 {
                     _db.DeletePaymentRecord(paymentId);
                     LoadPaymentRecords();
+                    LoadContractDetails();
                 }
             }
         }
