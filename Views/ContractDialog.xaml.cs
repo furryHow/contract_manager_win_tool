@@ -75,7 +75,6 @@ namespace ContractManager.Views
             ReminderDaysSlider.Value = contract.ReminderDays;
             NotesTextBox.Text = contract.Notes ?? "";
             TotalAmountTextBox.Text = contract.TotalAmount.ToString("F2");
-            PaidAmountTextBox.Text = contract.PaidAmount.ToString("F2");
 
             if (!string.IsNullOrEmpty(contract.StoragePath) && Directory.Exists(contract.StoragePath))
             {
@@ -212,20 +211,6 @@ namespace ContractManager.Views
                 return;
             }
 
-            if (!decimal.TryParse(PaidAmountTextBox.Text.Trim(), out var paidAmount) || paidAmount < 0)
-            {
-                MessageBox.Show("请输入有效的已支付金额（非负数值）。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                PaidAmountTextBox.Focus();
-                return;
-            }
-
-            if (paidAmount > totalAmount)
-            {
-                MessageBox.Show("已支付金额不能超过合同总额。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                PaidAmountTextBox.Focus();
-                return;
-            }
-
             var basePath = _config.GetStoragePath();
             var groupId = _originalContract?.GroupId;
             string storagePath;
@@ -258,7 +243,7 @@ namespace ContractManager.Views
                 Notes = NotesTextBox.Text,
                 StoragePath = storagePath,
                 TotalAmount = totalAmount,
-                PaidAmount = paidAmount
+                PaidAmount = 0
             };
 
             if (_attachmentFiles.Count > 0)
