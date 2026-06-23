@@ -60,6 +60,18 @@ namespace ContractManager.Services
                 "    FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE" +
                 ")";
             cmd.ExecuteNonQuery();
+
+            // 创建付款记录表
+            cmd.CommandText = "CREATE TABLE IF NOT EXISTS payment_records (" +
+                "    id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "    contract_id INTEGER NOT NULL," +
+                "    amount REAL NOT NULL," +
+                "    payment_date TEXT NOT NULL," +
+                "    notes TEXT," +
+                "    created_at TEXT DEFAULT (datetime('now','localtime'))," +
+                "    FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE" +
+                ")";
+            cmd.ExecuteNonQuery();
             MigrateSchema();
         }
 
@@ -94,6 +106,46 @@ namespace ContractManager.Services
             if (!cols.Contains("paid_amount"))
             {
                 cmd.CommandText = "ALTER TABLE contracts ADD COLUMN paid_amount REAL DEFAULT 0";
+                cmd.ExecuteNonQuery();
+            }
+
+            // 迁移已有 paid_amount 数据到 payment_records 表
+            MigrateExistingPaidAmounts();
+        }
+
+        /// <summary>
+        /// 迁移已有的 paid_amount 数据到 payment_records 表
+        /// </summary>
+        private void MigrateExistingPaidAmounts()
+        {
+            using var cmd = _connection.CreateCommand();
+            // 检查是否有需要迁移的数据
+            cmd.CommandText = "SELECT COUNT(*) FROM contracts WHERE paid_amount > 0 AND id NOT IN (SELECT DISTINCT contract_id FROM payment_records)";
+            var count = (long)cmd.ExecuteScalar()!;
+            if (count == 0) return;
+            
+            // 获取需要迁移的合同
+            cmd.CommandText = "SELECT id, paid_amount, created_at FROM contracts WHERE paid_amount > 0 AND id NOT IN (SELECT DISTINCT contract_id FROM payment_records)";
+            using var reader = cmd.ExecuteReader();
+            var migrations = new List<(long Id, decimal Amount, string Date)>();
+            while (reader.Read())
+            {
+                var id = reader.GetInt64(0);
+                var amount = reader.GetDecimal(1);
+                var createdAt = reader.IsDBNull(2) ? DateTime.Now.ToString("yyyy-MM-dd") : reader.GetString(2).Substring(0, 10);
+                migrations.Add((id, amount, createdAt));
+            }
+            reader.Close();
+            
+            // 插入迁移数据
+            foreach (var (id, amount, date) in migrations)
+            {
+                cmd.CommandText = "INSERT INTO payment_records (contract_id, amount, payment_date, notes) VALUES (@cid, @amt, @date, @notes)";
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@cid", id);
+                cmd.Parameters.AddWithValue("@amt", amount);
+                cmd.Parameters.AddWithValue("@date", date);
+                cmd.Parameters.AddWithValue("@notes", "系统迁移数据");
                 cmd.ExecuteNonQuery();
             }
         }
@@ -290,6 +342,69 @@ namespace ContractManager.Services
             cmd.Parameters.AddWithValue("@pa", paidAmount);
             cmd.Parameters.AddWithValue("@id", id);
             cmd.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// 添加付款记录
+        /// </summary>
+        public long AddPaymentRecord(long contractId, decimal amount, string paymentDate, string? notes = null)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "INSERT INTO payment_records (contract_id, amount, payment_date, notes) VALUES (@cid, @amt, @date, @notes)";
+            cmd.Parameters.AddWithValue("@cid", contractId);
+            cmd.Parameters.AddWithValue("@amt", amount);
+            cmd.Parameters.AddWithValue("@date", paymentDate);
+            cmd.Parameters.AddWithValue("@notes", notes ?? (object?)DBNull.Value);
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "SELECT last_insert_rowid()";
+            return (long)cmd.ExecuteScalar()!;
+        }
+
+        /// <summary>
+        /// 获取合同的所有付款记录，按日期倒序
+        /// </summary>
+        public List<PaymentRecord> GetPaymentRecords(long contractId)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT id, contract_id, amount, payment_date, notes, created_at FROM payment_records WHERE contract_id = @cid ORDER BY payment_date DESC, id DESC";
+            cmd.Parameters.AddWithValue("@cid", contractId);
+            using var reader = cmd.ExecuteReader();
+            var result = new List<PaymentRecord>();
+            while (reader.Read())
+            {
+                result.Add(new PaymentRecord
+                {
+                    Id = reader.GetInt64(0),
+                    ContractId = reader.GetInt64(1),
+                    Amount = reader.GetDecimal(2),
+                    PaymentDate = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    Notes = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    CreatedAt = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                });
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 删除付款记录
+        /// </summary>
+        public void DeletePaymentRecord(long paymentId)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "DELETE FROM payment_records WHERE id = @id";
+            cmd.Parameters.AddWithValue("@id", paymentId);
+            cmd.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// 获取合同累计已付金额
+        /// </summary>
+        public decimal GetTotalPaidAmount(long contractId)
+        {
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "SELECT COALESCE(SUM(amount), 0) FROM payment_records WHERE contract_id = @cid";
+            cmd.Parameters.AddWithValue("@cid", contractId);
+            return (decimal)cmd.ExecuteScalar()!;
         }
 
         public void DeleteContract(long contractId)
