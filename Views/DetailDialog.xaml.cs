@@ -26,6 +26,7 @@ namespace ContractManager.Views
             _config = config;
 
             LoadContractDetails();
+            LoadPaymentRecords();
             LoadContractHistory();
         }
 
@@ -84,6 +85,47 @@ namespace ContractManager.Views
             }
 
             HistoryGrid.ItemsSource = historyItems;
+        }
+
+        private void LoadPaymentRecords()
+        {
+            var payments = _db.GetPaymentRecords(_contractId);
+            PaymentGrid.ItemsSource = payments;
+
+            var totalPaid = _db.GetTotalPaidAmount(_contractId);
+            TotalPaidText.Text = totalPaid.ToString("N2") + " 元";
+
+            var contract = _db.GetContract(_contractId);
+            if (contract != null)
+            {
+                var unpaid = contract.TotalAmount - totalPaid;
+                UnpaidText.Text = unpaid.ToString("N2") + " 元";
+            }
+        }
+
+        private void AddPaymentButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new PaymentInputDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                _db.AddPaymentRecord(_contractId, dialog.Amount, dialog.PaymentDate, dialog.Notes);
+                LoadPaymentRecords();
+            }
+        }
+
+        private void DeletePaymentButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.Tag is long paymentId)
+            {
+                var result = MessageBox.Show("确定要删除这条付款记录吗？", "确认删除",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    _db.DeletePaymentRecord(paymentId);
+                    LoadPaymentRecords();
+                }
+            }
         }
 
         private void OpenFolderButton_Click(object sender, RoutedEventArgs e)

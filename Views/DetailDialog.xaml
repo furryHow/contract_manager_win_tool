@@ -93,7 +93,58 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- Tab 2: History -->
+            <!-- Tab 2: Payment Records -->
+            <TabItem Header="付款记录">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 付款记录列表 -->
+                    <DataGrid Grid.Row="0" x:Name="PaymentGrid"
+                             AutoGenerateColumns="False"
+                             IsReadOnly="True"
+                             HeadersVisibility="Column"
+                             GridLinesVisibility="Horizontal"
+                             BorderThickness="1" BorderBrush="#DDDDDD"
+                             Margin="0,0,0,12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="付款日期" Binding="{Binding PaymentDate}" Width="120"/>
+                            <DataGridTextColumn Header="金额" Binding="{Binding Amount, StringFormat=N2}" Width="120"/>
+                            <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="*"/>
+                            <DataGridTemplateColumn Header="操作" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="删除" 
+                                                Style="{StaticResource ActionButtonStyle}"
+                                                Click="DeletePaymentButton_Click"
+                                                Tag="{Binding Id}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 汇总信息 -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="累计已付：" FontWeight="Medium"/>
+                        <TextBlock x:Name="TotalPaidText" FontWeight="Medium" Foreground="#2E7D32"/>
+                        <TextBlock Text="　未付：" FontWeight="Medium" Margin="24,0,0,0"/>
+                        <TextBlock x:Name="UnpaidText" FontWeight="Medium" Foreground="#D32F2F"/>
+                    </StackPanel>
+
+                    <!-- 添加按钮 -->
+                    <Button Grid.Row="2" Content="+ 添加付款" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Click="AddPaymentButton_Click"
+                            HorizontalAlignment="Left"
+                            Width="100"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 3: History -->
             <TabItem Header="续签历史">
                 <Grid Margin="12">
                     <Grid.RowDefinitions>
