@@ -333,6 +333,7 @@ namespace ContractManager
             CleanupNotifyIcon(ref icon);
             _db?.Dispose();
             _reminderService?.Dispose();
+            _updateService?.Dispose();
             Shutdown();
         }
 
