@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using ContractManager;
 using ContractManager.Models;
 using ContractManager.Services;
 
@@ -373,7 +374,8 @@ namespace ContractManager.ViewModels
 
         private void ExecuteOpenSettings(object? _)
         {
-            var dialog = new Views.SettingsDialog(_config, _db);
+            var updateService = (Application.Current as App)?.UpdateService;
+            var dialog = new Views.SettingsDialog(_config, _db, updateService);
             dialog.Owner = OwnerWindow ?? Application.Current.MainWindow;
             dialog.ShowDialog();
 

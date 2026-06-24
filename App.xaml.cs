@@ -326,7 +326,7 @@ namespace ContractManager
             return plus > 0 ? v[..plus] : v;
         }
 
-        private void ExitApplication()
+        public void ExitApplication()
         {
             var icon = _notifyIcon;
             _notifyIcon = null;

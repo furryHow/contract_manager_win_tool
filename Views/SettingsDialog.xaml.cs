@@ -3,6 +3,8 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using ContractManager.Models;
 using ContractManager.Services;
 
 namespace ContractManager.Views
@@ -12,24 +14,30 @@ namespace ContractManager.Views
         private readonly ConfigManager _config;
         private readonly ReminderService _reminderService;
         private readonly DatabaseService? _db;
+        private UpdateService? _updateService;
+        private UpdateInfo? _pendingUpdate;
 
         /// <summary>
         /// Whether a backup import was performed and the caller should reload data.
         /// </summary>
         public bool BackupImported { get; private set; }
 
-        public SettingsDialog(ConfigManager config) : this(config, null) { }
+        public SettingsDialog(ConfigManager config) : this(config, null, null) { }
 
-        public SettingsDialog(ConfigManager config, DatabaseService? db)
+        public SettingsDialog(ConfigManager config, DatabaseService? db) : this(config, db, null) { }
+
+        public SettingsDialog(ConfigManager config, DatabaseService? db, UpdateService? updateService)
         {
             InitializeComponent();
 
             _config = config;
             _db = db;
+            _updateService = updateService;
             _reminderService = new ReminderService();
 
             LoadSettings();
             CheckTaskStatus();
+            LoadUpdateSection();
         }
 
         private void LoadSettings()
@@ -70,6 +78,120 @@ namespace ContractManager.Views
             {
                 TaskStatusText.Text = $"状态检查失败: {ex.Message}";
             }
+        }
+
+        private void LoadUpdateSection()
+        {
+            CurrentVersionText.Text = $"v{UpdateService.CurrentVersion}";
+            HideUpdateControls();
+        }
+
+        private void HideUpdateControls()
+        {
+            NewVersionLabel.Visibility = Visibility.Collapsed;
+            ChangelogTextBox.Visibility = Visibility.Collapsed;
+            UpdateActionsPanel.Visibility = Visibility.Collapsed;
+            DownloadProgressBar.Visibility = Visibility.Collapsed;
+            _pendingUpdate = null;
+        }
+
+        private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_updateService == null)
+            {
+                UpdateStatusText.Text = "更新服务不可用。";
+                UpdateStatusText.Foreground = System.Windows.Media.Brushes.Red;
+                return;
+            }
+
+            UpdateStatusText.Text = "正在检查更新...";
+            UpdateStatusText.Foreground = System.Windows.Media.Brushes.Gray;
+            HideUpdateControls();
+            ((Button)sender).IsEnabled = false;
+
+            try
+            {
+                var info = await _updateService.CheckForUpdateAsync();
+                if (info == null)
+                {
+                    UpdateStatusText.Text = $"当前已是最新版本 (v{UpdateService.CurrentVersion})";
+                    UpdateStatusText.Foreground = System.Windows.Media.Brushes.Green;
+                }
+                else
+                {
+                    _pendingUpdate = info;
+                    UpdateStatusText.Text = $"发现新版本 v{info.Version}"
+                        + (info.IsPrerelease ? "（预发布）" : "");
+                    UpdateStatusText.Foreground = System.Windows.Media.Brushes.Orange;
+                    ChangelogTextBox.Text = string.IsNullOrEmpty(info.Changelog)
+                        ? "（此版本未提供更新说明）" : info.Changelog;
+                    NewVersionLabel.Visibility = Visibility.Visible;
+                    ChangelogTextBox.Visibility = Visibility.Visible;
+                    UpdateActionsPanel.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusText.Text = $"检查更新失败：{ex.Message}（请检查网络）";
+                UpdateStatusText.Foreground = System.Windows.Media.Brushes.Red;
+            }
+            finally
+            {
+                ((Button)sender).IsEnabled = true;
+            }
+        }
+
+        private async void DownloadUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_pendingUpdate == null || _updateService == null) return;
+
+            var zipPath = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), "cm_update.zip");
+
+            DownloadProgressBar.Visibility = Visibility.Visible;
+            DownloadProgressBar.Value = 0;
+            UpdateActionsPanel.IsEnabled = false;
+            UpdateStatusText.Text = "正在下载...";
+            UpdateStatusText.Foreground = System.Windows.Media.Brushes.Gray;
+
+            var progress = new Progress<double>(p => DownloadProgressBar.Value = p);
+
+            try
+            {
+                await _updateService.DownloadUpdateAsync(_pendingUpdate, zipPath, progress);
+                UpdateStatusText.Text = "下载完成，正在准备应用更新...";
+                UpdateStatusText.Foreground = System.Windows.Media.Brushes.Green;
+
+                _updateService.ApplyUpdate(zipPath);
+
+                // updater 脚本已启动并等待主进程退出，触发主程序正常退出
+                UpdateStatusText.Text = "即将退出程序以完成更新，更新后程序会自动重启。";
+                await Task.Delay(500); // 给 UI 一点时间渲染提示
+                (Application.Current as App)?.ExitApplication();
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusText.Text = $"下载或应用更新失败：{ex.Message}";
+                UpdateStatusText.Foreground = System.Windows.Media.Brushes.Red;
+                UpdateActionsPanel.IsEnabled = true;
+                try { if (System.IO.File.Exists(zipPath)) System.IO.File.Delete(zipPath); } catch { }
+            }
+        }
+
+        private void SkipVersionButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_pendingUpdate == null) return;
+            _config.UpdateSkipVersion = _pendingUpdate.Version;
+            _config.Save();
+            UpdateStatusText.Text = $"已跳过版本 v{_pendingUpdate.Version}（下次有更新会再提醒）。";
+            UpdateStatusText.Foreground = System.Windows.Media.Brushes.Green;
+            HideUpdateControls();
+        }
+
+        private void DismissUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            HideUpdateControls();
+            UpdateStatusText.Text = "";
         }
 
         private void BrowseStoragePathButton_Click(object sender, RoutedEventArgs e)

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="设置" Height="420" Width="500"
+        Title="设置" Height="480" Width="500"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False">
@@ -118,6 +118,44 @@
                             HorizontalAlignment="Left" Margin="0,8,0,0"/>
 
                     <TextBlock x:Name="BackupStatusText" Margin="0,16,0,0" FontSize="12"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Update Tab -->
+            <TabItem Header="检查更新">
+                <StackPanel Margin="12">
+                    <TextBlock Text="当前版本" Style="{StaticResource FormLabelStyle}"/>
+                    <TextBlock x:Name="CurrentVersionText" Text="v?.?.?" FontSize="12"
+                               Foreground="#555555" Margin="0,4,0,0"/>
+
+                    <Button Content="检查更新" Style="{StaticResource PrimaryButtonStyle}"
+                            Click="CheckUpdateButton_Click"
+                            HorizontalAlignment="Left" Margin="0,12,0,0"/>
+
+                    <TextBlock x:Name="UpdateStatusText" Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap"/>
+
+                    <TextBlock x:Name="NewVersionLabel" Text="新版本内容"
+                               Style="{StaticResource FormLabelStyle}"
+                               Margin="0,12,0,0" Visibility="Collapsed"/>
+                    <TextBox x:Name="ChangelogTextBox"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             Height="120" AcceptsReturn="True" TextWrapping="Wrap"
+                             IsReadOnly="True" VerticalScrollBarVisibility="Auto"
+                             Visibility="Collapsed" Margin="0,4,0,0"/>
+
+                    <StackPanel x:Name="UpdateActionsPanel" Orientation="Horizontal"
+                                Margin="0,12,0,0" Visibility="Collapsed">
+                        <Button Content="立即更新" Style="{StaticResource PrimaryButtonStyle}"
+                                Click="DownloadUpdateButton_Click"/>
+                        <Button Content="跳过此版本" Style="{StaticResource SecondaryButtonStyle}"
+                                Click="SkipVersionButton_Click" Margin="8,0,0,0"/>
+                        <Button Content="以后再说" Style="{StaticResource SecondaryButtonStyle}"
+                                Click="DismissUpdateButton_Click" Margin="8,0,0,0"/>
+                    </StackPanel>
+
+                    <ProgressBar x:Name="DownloadProgressBar" Height="20"
+                                 Margin="0,12,0,0" Minimum="0" Maximum="100"
+                                 Visibility="Collapsed"/>
                 </StackPanel>
             </TabItem>
         </TabControl>
