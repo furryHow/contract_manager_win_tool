@@ -131,7 +131,7 @@ namespace ContractManager.Services
             while (reader.Read())
             {
                 var id = reader.GetInt64(0);
-                var amount = reader.GetDecimal(1);
+                var amount = ToDecimalSafe(reader.GetValue(1));
                 var createdAt = reader.IsDBNull(2) ? DateTime.Now.ToString("yyyy-MM-dd") : reader.GetString(2).Substring(0, 10);
                 migrations.Add((id, amount, createdAt));
             }
@@ -192,9 +192,20 @@ namespace ContractManager.Services
                 Notes = reader.IsDBNull(8) ? null : reader.GetString(8),
                 StoragePath = reader.IsDBNull(9) ? null : reader.GetString(9),
                 CreatedAt = reader.IsDBNull(10) ? "" : reader.GetString(10),
-                TotalAmount = reader.IsDBNull(11) ? 0 : reader.GetDecimal(11),
-                PaidAmount = reader.IsDBNull(12) ? 0 : reader.GetDecimal(12),
+                TotalAmount = reader.IsDBNull(11) ? 0 : ToDecimalSafe(reader.GetValue(11)),
+                PaidAmount = reader.IsDBNull(12) ? 0 : ToDecimalSafe(reader.GetValue(12)),
             };
+        }
+
+        /// <summary>
+        /// 将 SQLite 返回的标量值安全转换为 decimal。
+        /// SQLite 的 SUM/COALESCE 可能返回 Int64/Int32/Double/Decimal 等不同类型，
+        /// 直接 (decimal) 拆箱会抛 InvalidCastException，故用 Convert.ToDecimal 兼容。
+        /// </summary>
+        private static decimal ToDecimalSafe(object? value)
+        {
+            if (value == null || value is DBNull) return 0;
+            return Convert.ToDecimal(value);
         }
 
         public static string? CalcReminderDate(string endDateStr, int reminderDays)
@@ -348,7 +359,7 @@ namespace ContractManager.Services
 
             // 同步更新 contracts.paid_amount
             cmd.CommandText = "SELECT COALESCE(SUM(amount), 0) FROM payment_records WHERE contract_id = @cid";
-            var totalPaid = (decimal)cmd.ExecuteScalar()!;
+            var totalPaid = ToDecimalSafe(cmd.ExecuteScalar());
             cmd.CommandText = "UPDATE contracts SET paid_amount = @pa WHERE id = @cid";
             cmd.Parameters.Clear();
             cmd.Parameters.AddWithValue("@pa", totalPaid);
@@ -375,7 +386,7 @@ namespace ContractManager.Services
                 {
                     Id = reader.GetInt64(0),
                     ContractId = reader.GetInt64(1),
-                    Amount = reader.GetDecimal(2),
+                    Amount = ToDecimalSafe(reader.GetValue(2)),
                     PaymentDate = reader.IsDBNull(3) ? "" : reader.GetString(3),
                     Notes = reader.IsDBNull(4) ? null : reader.GetString(4),
                     CreatedAt = reader.IsDBNull(5) ? "" : reader.GetString(5),
@@ -405,7 +416,7 @@ namespace ContractManager.Services
             cmd.CommandText = "SELECT COALESCE(SUM(amount), 0) FROM payment_records WHERE contract_id = @cid";
             cmd.Parameters.Clear();
             cmd.Parameters.AddWithValue("@cid", contractId);
-            var totalPaid = (decimal)cmd.ExecuteScalar()!;
+            var totalPaid = ToDecimalSafe(cmd.ExecuteScalar());
             cmd.CommandText = "UPDATE contracts SET paid_amount = @pa WHERE id = @cid";
             cmd.Parameters.AddWithValue("@pa", totalPaid);
             cmd.ExecuteNonQuery();
@@ -419,7 +430,7 @@ namespace ContractManager.Services
             using var cmd = _connection.CreateCommand();
             cmd.CommandText = "SELECT COALESCE(SUM(amount), 0) FROM payment_records WHERE contract_id = @cid";
             cmd.Parameters.AddWithValue("@cid", contractId);
-            return (decimal)cmd.ExecuteScalar()!;
+            return ToDecimalSafe(cmd.ExecuteScalar());
         }
 
         public void DeleteContract(long contractId)
