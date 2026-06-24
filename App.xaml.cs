@@ -292,14 +292,28 @@ namespace ContractManager
 
         private void ShowAbout()
         {
+            var version = GetAssemblyVersion();
             System.Windows.MessageBox.Show(
-                "合同管理系统 v2.0\n\n" +
+                $"合同管理系统 v{version}\n\n" +
                 "用于管理合同信息和到期提醒。\n\n" +
                 "华雄赞助\n\n" +
                 "Copyright © 2026 王哥出品",
                 "关于",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+
+        /// <summary>
+        /// 读取 AssemblyInformationalVersion（来自 csproj &lt;Version&gt;），
+        /// 去掉可能的 source revision metadata（如 "2.3.0+abc"）。
+        /// </summary>
+        private static string GetAssemblyVersion()
+        {
+            var attr = Assembly.GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            var v = attr?.InformationalVersion ?? "0.0.0";
+            var plus = v.IndexOf('+');
+            return plus > 0 ? v[..plus] : v;
         }
 
         private void ExitApplication()

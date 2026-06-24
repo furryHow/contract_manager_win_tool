@@ -7,6 +7,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>ico\favicon.ico</ApplicationIcon>
+    <Version>2.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
