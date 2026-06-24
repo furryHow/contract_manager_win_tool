@@ -42,6 +42,9 @@ namespace ContractManager.Services
                 ["webhook_url"] = "",
                 ["reminder_time"] = "09:00",
                 ["auto_start"] = true,
+                ["update_repo"] = "furryHow/contract_manager_win_tool",
+                ["update_check_on_startup"] = false,
+                ["update_skip_version"] = "",
             };
 
             MigrateFromOldLocation(exeDir);
@@ -229,6 +232,24 @@ namespace ContractManager.Services
         {
             get => GetBool("auto_start", true);
             set => Set("auto_start", value);
+        }
+
+        public string UpdateRepo
+        {
+            get => GetString("update_repo") ?? "furryHow/contract_manager_win_tool";
+            set => Set("update_repo", value);
+        }
+
+        public bool UpdateCheckOnStartup
+        {
+            get => GetBool("update_check_on_startup");
+            set => Set("update_check_on_startup", value);
+        }
+
+        public string UpdateSkipVersion
+        {
+            get => GetString("update_skip_version") ?? "";
+            set => Set("update_skip_version", value);
         }
 
         /// <summary>
