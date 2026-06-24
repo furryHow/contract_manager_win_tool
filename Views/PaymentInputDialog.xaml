@@ -21,7 +21,7 @@
             <!-- Amount -->
             <TextBlock Text="付款金额 *" Style="{StaticResource FormLabelStyle}"/>
             <TextBox x:Name="AmountTextBox" Style="{StaticResource FormTextBoxStyle}"
-                     Text="0" TextAlignment="Right"/>
+                     TextAlignment="Right"/>
 
             <!-- Date -->
             <TextBlock Text="付款日期 *" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0"/>
