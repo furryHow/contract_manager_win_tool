@@ -153,6 +153,8 @@
                     <MenuItem Header="编辑" Command="{Binding EditContractCommand}"/>
                     <MenuItem Header="删除" Command="{Binding DeleteContractCommand}"/>
                     <Separator/>
+                    <MenuItem Header="➕ 添加付款" Command="{Binding AddPaymentCommand}"/>
+                    <Separator/>
                     <MenuItem Header="打开文件夹" Command="{Binding OpenFolderCommand}"/>
                 </ContextMenu>
             </ListView.ContextMenu>

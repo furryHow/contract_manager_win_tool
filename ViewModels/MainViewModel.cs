@@ -202,6 +202,7 @@ namespace ContractManager.ViewModels
         public ICommand RefreshCommand { get; private set; } = null!;
         public ICommand ViewDetailCommand { get; private set; } = null!;
         public ICommand CheckRemindersCommand { get; private set; } = null!;
+        public ICommand AddPaymentCommand { get; private set; } = null!;
 
         private void InitializeCommands()
         {
@@ -214,6 +215,7 @@ namespace ContractManager.ViewModels
             RefreshCommand = new RelayCommand(ExecuteRefresh);
             ViewDetailCommand = new RelayCommand(ExecuteViewDetail, _ => SelectedContract != null);
             CheckRemindersCommand = new RelayCommand(ExecuteCheckReminders);
+            AddPaymentCommand = new RelayCommand(ExecuteAddPayment, _ => SelectedContract != null);
         }
 
         public void LoadContracts()
@@ -392,6 +394,36 @@ namespace ContractManager.ViewModels
             var dialog = new Views.DetailDialog(SelectedContract.Id, _db, _config);
             dialog.Owner = OwnerWindow ?? Application.Current.MainWindow;
             dialog.ShowDialog();
+        }
+
+        private void ExecuteAddPayment(object? _)
+        {
+            if (SelectedContract == null) return;
+            var cvm = SelectedContract;
+
+            var dialog = new Views.PaymentInputDialog();
+            dialog.Owner = OwnerWindow ?? Application.Current.MainWindow;
+            if (dialog.ShowDialog() != true) return;
+
+            // 验证累计付款不超过合同总额
+            var totalPaid = _db.GetTotalPaidAmount(cvm.Id);
+            var contract = _db.GetContract(cvm.Id);
+            if (contract != null && totalPaid + dialog.Amount > contract.TotalAmount)
+            {
+                System.Windows.MessageBox.Show(
+                    $"累计付款金额将超过合同总额。\n\n" +
+                    $"合同总额: {contract.TotalAmount:N2} 元\n" +
+                    $"已付金额: {totalPaid:N2} 元\n" +
+                    $"本次付款: {dialog.Amount:N2} 元\n" +
+                    $"超出金额: {(totalPaid + dialog.Amount - contract.TotalAmount):N2} 元",
+                    "验证失败",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            _db.AddPaymentRecord(cvm.Id, dialog.Amount, dialog.PaymentDate, dialog.Notes);
+            LoadContracts();
         }
 
         private void ExecuteCheckReminders(object? _)
