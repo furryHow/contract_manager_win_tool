@@ -24,12 +24,19 @@ namespace ContractManager
         private ConfigManager? _config;
         private DatabaseService? _db;
         private ReminderService? _reminderService;
+        private UpdateService? _updateService;
         private EventWaitHandle? _signalEvent;
 
         /// <summary>
         /// 暴露 NotifyIcon 供其他组件使用（如提醒气泡通知）。
         /// </summary>
         public NotifyIcon? NotifyIcon => _notifyIcon;
+
+        /// <summary>
+        /// 暴露 UpdateService 供 MainViewModel/SettingsDialog 取用
+        /// （沿用 NotifyIcon 注入模式）。
+        /// </summary>
+        public UpdateService? UpdateService => _updateService;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -136,6 +143,9 @@ namespace ContractManager
                     ((Window)s!).Hide();
                 };
                 _mainWindow.Show();
+
+                // 装配 UpdateService（无论是否 --check 接管路径，都确保主实例持有）
+                _updateService ??= new UpdateService(_config!);
 
                 // Auto-start check
                 CheckAutoStart();
@@ -361,6 +371,7 @@ namespace ContractManager
             CleanupNotifyIcon(ref icon);
             _db?.Dispose();
             _reminderService?.Dispose();
+            _updateService?.Dispose();
             _signalEvent?.Dispose();
             if (_ownsMutex)
             {
